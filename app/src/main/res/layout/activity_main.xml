@@ -62,7 +62,7 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- 背景图片/视频流（中间区域，在左右面板之间，缩小显示） -->
+    <!-- 背景图片/视频流（从左边开始，占据到右侧面板前的所有空间） -->
     <ImageView
         android:id="@+id/backgroundImage"
         android:layout_width="0dp"
@@ -72,281 +72,10 @@
         android:src="@drawable/land"
         app:layout_constraintTop_toBottomOf="@id/topStatusBar"
         app:layout_constraintBottom_toTopOf="@id/controlButtons"
-        app:layout_constraintStart_toEndOf="@id/leftPanel"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/rightPanel"
         tools:ignore="ContentDescription" />
 
-    <!-- 左侧面板容器 -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/leftPanel"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/topStatusBar"
-        app:layout_constraintBottom_toTopOf="@id/controlButtons"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.25">
-
-        <!-- 机器状态面板 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardMachineStatus"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="-12dp"
-            android:layout_marginEnd="0dp"
-            app:cardBackgroundColor="#CC000000"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="6dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="4dp"
-                android:gravity="end">
-
-                <!-- Engine RPM -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:paddingBottom="4dp"
-                    android:text="MACHINE STATUS"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end">
-                    <TextView
-                        android:id="@+id/tvRpmLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="RPM:"
-                        android:textColor="#CCCCCC"
-                        android:textSize="9sp" />
-
-                    <TextView
-                        android:id="@+id/tvRpmValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1252"
-                        android:textColor="#00AAFF"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end"
-                    android:layout_marginTop="1dp"
-                    android:layout_marginBottom="3dp">
-                    <ProgressBar
-                        android:id="@+id/progressRpm"
-                        style="@android:style/Widget.ProgressBar.Horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="4dp"
-                        android:layout_weight="2"
-                        android:max="3000"
-                        android:progress="1252"
-                        android:progressTint="#00AAFF" />
-                </LinearLayout>
-
-                <!-- Hydraulics -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end">
-                    <TextView
-                        android:id="@+id/tvHydraulicsLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Hyd:"
-                        android:textColor="#CCCCCC"
-                        android:textSize="9sp" />
-
-                    <TextView
-                        android:id="@+id/tvHydraulicsValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="249 bar"
-                        android:textColor="#FF8800"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end"
-                    android:layout_marginTop="1dp"
-                    android:layout_marginBottom="3dp">
-                    <ProgressBar
-                        android:id="@+id/progressHydraulics"
-                        style="@android:style/Widget.ProgressBar.Horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="4dp"
-                        android:layout_weight="2"
-                        android:max="400"
-                        android:progress="249"
-                        android:progressTint="#FF8800" />
-                </LinearLayout>
-
-                <!-- Fuel Level -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end">
-                    <TextView
-                        android:id="@+id/tvFuelLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Fuel:"
-                        android:textColor="#CCCCCC"
-                        android:textSize="9sp" />
-
-                    <TextView
-                        android:id="@+id/tvFuelValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="78%"
-                        android:textColor="#00FF00"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end"
-                    android:layout_marginTop="1dp"
-                    android:layout_marginBottom="3dp">
-                    <ProgressBar
-                        android:id="@+id/progressFuel"
-                        style="@android:style/Widget.ProgressBar.Horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="4dp"
-                        android:layout_weight="2"
-                        android:max="100"
-                        android:progress="78"
-                        android:progressTint="#00FF00" />
-                </LinearLayout>
-
-                <!-- Coolant -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end">
-                    <TextView
-                        android:id="@+id/tvCoolantLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Coolant:"
-                        android:textColor="#CCCCCC"
-                        android:textSize="9sp" />
-
-                    <TextView
-                        android:id="@+id/tvCoolantValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="82°C"
-                        android:textColor="#00AAFF"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end"
-                    android:layout_marginTop="1dp">
-                    <ProgressBar
-                        android:id="@+id/progressCoolant"
-                        style="@android:style/Widget.ProgressBar.Horizontal"
-                        android:layout_width="0dp"
-                        android:layout_height="4dp"
-                        android:layout_weight="2"
-                        android:max="120"
-                        android:progress="82"
-                        android:progressTint="#00AAFF" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- 定位信息面板 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardPositioning"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="-12dp"
-            android:layout_marginEnd="0dp"
-            app:cardBackgroundColor="#CC000000"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:layout_constraintTop_toBottomOf="@id/cardMachineStatus"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="4dp"
-                android:gravity="end">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingBottom="6dp"
-                    android:text="POSITIONING"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_gravity="end" />
-
-                <TextView
-                    android:id="@+id/tvLatitude"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="2dp"
-                    android:text="LAT: 31.230400 N"
-                    android:textColor="#CCCCCC"
-                    android:textSize="11sp"
-                    android:layout_gravity="end" />
-
-                <TextView
-                    android:id="@+id/tvLongitude"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="LNG: 121.473700 E"
-                    android:textColor="#CCCCCC"
-                    android:textSize="11sp"
-                    android:layout_gravity="end" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 右侧面板容器 -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -365,6 +94,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:layout_marginStart="0dp"
             android:layout_marginEnd="-12dp"
             app:cardBackgroundColor="#CC000000"
@@ -373,7 +103,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/cardDigDepth">
+            app:layout_constraintBottom_toTopOf="@id/cardPositioning">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -402,6 +132,57 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- 定位信息面板 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPositioning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="-12dp"
+            app:cardBackgroundColor="#CC000000"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/cardPosture"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/cardDigDepth">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="POSITIONING"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="4dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tvLatitude"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="2dp"
+                    android:text="LAT: 31.230400 N"
+                    android:textColor="#CCCCCC"
+                    android:textSize="9sp" />
+
+                <TextView
+                    android:id="@+id/tvLongitude"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="LNG: 121.473700 E"
+                    android:textColor="#CCCCCC"
+                    android:textSize="9sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- 挖掘深度面板和机器角度面板（并排） -->
         <LinearLayout
             android:id="@+id/cardDigDepth"
@@ -411,7 +192,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginStart="0dp"
             android:layout_marginEnd="-12dp"
-            app:layout_constraintTop_toBottomOf="@id/cardPosture"
+            app:layout_constraintTop_toBottomOf="@id/cardPositioning"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
@@ -430,7 +211,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp"
+                    android:padding="8dp"
                     android:gravity="center">
 
                     <TextView
@@ -438,9 +219,9 @@
                         android:layout_height="wrap_content"
                         android:text="DIG DEPTH"
                         android:textColor="#FFFFFF"
-                        android:textSize="12sp"
+                        android:textSize="10sp"
                         android:textStyle="bold"
-                        android:paddingBottom="6dp"
+                        android:paddingBottom="4dp"
                         android:gravity="center" />
 
                     <TextView
@@ -449,16 +230,16 @@
                         android:layout_height="wrap_content"
                         android:text="3.23 m"
                         android:textColor="#FFD700"
-                        android:textSize="20sp"
+                        android:textSize="16sp"
                         android:textStyle="bold"
-                        android:paddingBottom="8dp"
+                        android:paddingBottom="6dp"
                         android:gravity="center" />
 
                     <ProgressBar
                         android:id="@+id/progressDigDepth"
                         style="@android:style/Widget.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="12dp"
+                        android:layout_height="8dp"
                         android:max="1000"
                         android:progress="323"
                         android:progressTint="#FFD700" />
@@ -479,16 +260,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="8dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="ANGLES"
                         android:textColor="#FFFFFF"
-                        android:textSize="12sp"
+                        android:textSize="10sp"
                         android:textStyle="bold"
-                        android:paddingBottom="6dp"
+                        android:paddingBottom="4dp"
                         android:gravity="center" />
 
                     <TextView
@@ -497,8 +278,8 @@
                         android:layout_height="wrap_content"
                         android:text="BOOM: -30°"
                         android:textColor="#888888"
-                        android:textSize="11sp"
-                        android:layout_marginBottom="4dp" />
+                        android:textSize="9sp"
+                        android:layout_marginBottom="2dp" />
 
                     <TextView
                         android:id="@+id/tvStickAngle"
@@ -506,8 +287,8 @@
                         android:layout_height="wrap_content"
                         android:text="STICK: 45°"
                         android:textColor="#FFA500"
-                        android:textSize="11sp"
-                        android:layout_marginBottom="4dp" />
+                        android:textSize="9sp"
+                        android:layout_marginBottom="2dp" />
 
                     <TextView
                         android:id="@+id/tvBucketAngle"
@@ -515,7 +296,7 @@
                         android:layout_height="wrap_content"
                         android:text="BUCKET: 10°"
                         android:textColor="#FFD700"
-                        android:textSize="11sp" />
+                        android:textSize="9sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -529,8 +310,8 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:padding="8dp"
-        app:layout_constraintTop_toBottomOf="@id/leftPanel"
+        android:padding="6dp"
+        app:layout_constraintTop_toBottomOf="@id/backgroundImage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
@@ -538,55 +319,55 @@
         <Button
             android:id="@+id/btnLights"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:minWidth="80dp"
+            android:layout_height="40dp"
+            android:minWidth="60dp"
             android:text="💡 亮灯"
-            android:textSize="14sp"
-            android:layout_marginEnd="6dp"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
             android:backgroundTint="#FF8800"
             style="@style/Widget.Material3.Button" />
 
         <Button
             android:id="@+id/btnHorn"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:minWidth="80dp"
+            android:layout_height="40dp"
+            android:minWidth="60dp"
             android:text="🔊 鸣笛"
-            android:textSize="14sp"
-            android:layout_marginEnd="6dp"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
             android:backgroundTint="#FF8800"
             style="@style/Widget.Material3.Button" />
 
         <Button
             android:id="@+id/btnModeSwitch"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:minWidth="120dp"
+            android:layout_height="40dp"
+            android:minWidth="100dp"
             android:text="手动驾驶"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
-            android:layout_marginEnd="6dp"
+            android:layout_marginEnd="4dp"
             android:backgroundTint="#00AAFF"
             style="@style/Widget.Material3.Button" />
 
         <Button
             android:id="@+id/btnHome"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:minWidth="80dp"
+            android:layout_height="40dp"
+            android:minWidth="60dp"
             android:text="🏠 主页"
-            android:textSize="14sp"
-            android:layout_marginEnd="6dp"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
             android:backgroundTint="#888888"
             style="@style/Widget.Material3.Button" />
 
         <Button
             android:id="@+id/btnStop"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:minWidth="80dp"
+            android:layout_height="40dp"
+            android:minWidth="60dp"
             android:text="⏹ 急停"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:backgroundTint="#FF0000"
             style="@style/Widget.Material3.Button" />
     </LinearLayout>

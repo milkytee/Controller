@@ -14,11 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.skydroid.rcsdk.RCSDKManager;
 import com.skydroid.rcsdk.KeyManager;
@@ -28,11 +24,15 @@ import com.skydroid.rcsdk.PipelineManager;
 import com.skydroid.rcsdk.common.error.SkyException;
 import com.skydroid.rcsdk.SDKManagerCallBack;
 import com.skydroid.rcsdk.key.RemoteControllerKey;
+import com.skydroid.rcsdk.key.AirLinkKey;
+import com.skydroid.rcsdk.common.callback.KeyListener;
+import com.skydroid.rcsdk.common.callback.CompletionCallbackWith;
 
 import android.widget.RelativeLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -41,10 +41,6 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity {
     
     // UI组件
-    private TextView tvRpmValue;
-    private TextView tvHydraulicsValue;
-    private TextView tvFuelValue;
-    private TextView tvCoolantValue;
     private TextView tvBoomAngle;
     private TextView tvStickAngle;
     private TextView tvBucketAngle;
@@ -55,15 +51,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvRcSignal;
     private TextView tvBattery;
     
-    private ProgressBar progressRpm;
-    private ProgressBar progressHydraulics;
-    private ProgressBar progressFuel;
-    private ProgressBar progressCoolant;
     private ProgressBar progressDigDepth;
     
     private ExcavatorPostureView excavatorPostureView;
     private ImageView backgroundImage;
-    private TextView tvJoystickValues; // 摇杆值显示TextView
     
     private Button btnLights;
     private Button btnHorn;
@@ -103,6 +94,10 @@ public class MainActivity extends AppCompatActivity {
     private int ch3Value = 0; // 左摇杆上下
     private int ch4Value = 0; // 左摇杆左右
     
+    // 信号强度相关
+    private KeyListener<Integer> keySignalQualityListener;
+    private int currentSignalStrength = 0; // 当前信号强度（0-100）
+    
     // 角度数据类
     private static class AngleSet {
         float boom;
@@ -119,14 +114,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
         
         initViews();
         initAngleSets();
@@ -136,10 +124,6 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void initViews() {
-        tvRpmValue = findViewById(R.id.tvRpmValue);
-        tvHydraulicsValue = findViewById(R.id.tvHydraulicsValue);
-        tvFuelValue = findViewById(R.id.tvFuelValue);
-        tvCoolantValue = findViewById(R.id.tvCoolantValue);
         tvBoomAngle = findViewById(R.id.tvBoomAngle);
         tvStickAngle = findViewById(R.id.tvStickAngle);
         tvBucketAngle = findViewById(R.id.tvBucketAngle);
@@ -150,10 +134,6 @@ public class MainActivity extends AppCompatActivity {
         tvRcSignal = findViewById(R.id.tvRcSignal);
         tvBattery = findViewById(R.id.tvBattery);
         
-        progressRpm = findViewById(R.id.progressRpm);
-        progressHydraulics = findViewById(R.id.progressHydraulics);
-        progressFuel = findViewById(R.id.progressFuel);
-        progressCoolant = findViewById(R.id.progressCoolant);
         progressDigDepth = findViewById(R.id.progressDigDepth);
         
         excavatorPostureView = findViewById(R.id.excavatorPostureView);
@@ -162,55 +142,6 @@ public class MainActivity extends AppCompatActivity {
         // 设置背景图片（后续可替换为视频流）
         // 这里使用一个占位图片，实际使用时可以替换为视频流View
         backgroundImage.setImageResource(R.drawable.land);
-        
-        // 创建摇杆值显示TextView并叠加在ImageView上
-        createJoystickTextView();
-    }
-    
-    /**
-     * 创建摇杆值显示TextView并叠加在ImageView上
-     */
-    private void createJoystickTextView() {
-        // 获取ImageView的父容器
-        android.view.ViewGroup parent = (android.view.ViewGroup) backgroundImage.getParent();
-        
-        // 创建TextView
-        tvJoystickValues = new TextView(this);
-        tvJoystickValues.setTextColor(Color.WHITE);
-        tvJoystickValues.setTextSize(20);
-        tvJoystickValues.setPadding(20, 20, 20, 20);
-        tvJoystickValues.setBackgroundColor(0x80000000); // 半透明黑色背景
-        
-        // 设置布局参数，叠加在ImageView上
-        if (parent instanceof androidx.constraintlayout.widget.ConstraintLayout) {
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
-                new androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
-                    androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                    androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT
-                );
-            params.topToTop = R.id.backgroundImage;
-            params.startToStart = R.id.backgroundImage;
-            params.topMargin = 20;
-            params.startMargin = 20;
-            tvJoystickValues.setLayoutParams(params);
-        } else {
-            // 如果不是ConstraintLayout，使用RelativeLayout参数
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.addRule(RelativeLayout.ALIGN_TOP, R.id.backgroundImage);
-            params.addRule(RelativeLayout.ALIGN_START, R.id.backgroundImage);
-            params.topMargin = 20;
-            params.startMargin = 20;
-            tvJoystickValues.setLayoutParams(params);
-        }
-        
-        // 添加到父容器
-        parent.addView(tvJoystickValues);
-        
-        // 初始化显示
-        updateJoystickDisplay();
     }
     
     private void initAngleSets() {
@@ -312,9 +243,6 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void updateAllData() {
-        // 更新机器状态（带小幅随机波动）
-        updateMachineStatus();
-        
         // 更新连接信息
         updateConnectionInfo();
         
@@ -332,49 +260,26 @@ public class MainActivity extends AppCompatActivity {
         updateDigDepth();
     }
     
-    private void updateMachineStatus() {
-        // RPM: 1200-1300之间波动
-        int rpm = 1200 + random.nextInt(100);
-        tvRpmValue.setText(String.valueOf(rpm));
-        progressRpm.setProgress(rpm);
-        
-        // Hydraulics: 240-260之间波动
-        int hydraulics = 240 + random.nextInt(20);
-        tvHydraulicsValue.setText(hydraulics + " bar");
-        progressHydraulics.setProgress(hydraulics);
-        
-        // Fuel: 75-80%之间波动
-        int fuel = 75 + random.nextInt(5);
-        tvFuelValue.setText(fuel + "%");
-        progressFuel.setProgress(fuel);
-        
-        // Coolant: 80-85°C之间波动
-        int coolant = 80 + random.nextInt(5);
-        tvCoolantValue.setText(coolant + "°C");
-        progressCoolant.setProgress(coolant);
-    }
-    
     private void updateConnectionInfo() {
         // 连接延迟: 45-60ms之间波动
         int delay = 45 + random.nextInt(15);
         tvVideoLink.setText("延迟: " + delay + "ms");
         
-        // 信号强度: 模拟信号强度显示
-        int signalStrength = 70 + random.nextInt(20); // 70-90%
-        String signalBars = "";
-        int bars = (int) (signalStrength / 10);
-        for (int i = 0; i < 10; i++) {
-            if (i < bars) {
-                signalBars += "█";
-            } else {
-                signalBars += "░";
-            }
-        }
-        tvRcSignal.setText("信号: " + signalBars);
+        // 信号强度: 使用真实数据（通过监听器更新）
+        // 这里不再更新，由 keySignalQualityListener 回调更新
         
         // 电池电量: 80-90%之间波动
         int battery = 80 + random.nextInt(10);
         tvBattery.setText("电池: " + battery + "%");
+    }
+    
+    /**
+     * 更新信号强度显示
+     */
+    private void updateSignalDisplay() {
+        if (tvRcSignal != null) {
+            tvRcSignal.setText(currentSignalStrength + "%");
+        }
     }
     
     private void updateAngles() {
@@ -432,45 +337,33 @@ public class MainActivity extends AppCompatActivity {
      * 更新摇杆值
      */
     private void updateJoystickValues() {
-        try {
-            // 获取摇杆值（减去1500作为初始值）
-            ch1Value = KeyManager.getKeyValue(RemoteControllerKey.CH1) - 1500; // 右摇杆左右
-            ch2Value = KeyManager.getKeyValue(RemoteControllerKey.CH2) - 1500; // 右摇杆上下
-            ch3Value = KeyManager.getKeyValue(RemoteControllerKey.CH3) - 1500; // 左摇杆上下
-            ch4Value = KeyManager.getKeyValue(RemoteControllerKey.CH4) - 1500; // 左摇杆左右
-            
-            // 更新显示
-            updateJoystickDisplay();
-            
-        } catch (Exception e) {
-            Log.e("MainActivity", "获取摇杆值失败", e);
-            // 如果获取失败，显示错误信息
-            if (tvJoystickValues != null) {
-                tvJoystickValues.setText("摇杆值获取失败");
-            }
-        }
-    }
-    
-    /**
-     * 更新摇杆值显示
-     */
-    private void updateJoystickDisplay() {
-        if (tvJoystickValues != null) {
-            String displayText = String.format(Locale.getDefault(),
-                "CH1(右摇杆左右): %d\n" +
-                "CH2(右摇杆上下): %d\n" +
-                "CH3(左摇杆上下): %d\n" +
-                "CH4(左摇杆左右): %d",
-                ch1Value, ch2Value, ch3Value, ch4Value);
-            tvJoystickValues.setText(displayText);
-        }
+        KeyManager.INSTANCE.get(RemoteControllerKey.INSTANCE.getKeyChannels(), 
+            new CompletionCallbackWith<int[]>() {
+                @Override
+                public void onSuccess(int[] value) {
+                    // value 是摇杆值数组
+                    if (value != null && value.length >= 4) {
+                        // 减去1500作为初始值
+                        ch1Value = value[0] - 1500; // 右摇杆左右
+                        ch2Value = value[1] - 1500; // 右摇杆上下
+                        ch3Value = value[2] - 1500; // 左摇杆上下
+                        ch4Value = value[3] - 1500; // 左摇杆左右
+                    }
+                }
+
+                @Override
+                public void onFailure(SkyException e) {
+                    Log.e("MainActivity", "摇杆值获取失败: " + (e != null ? e.getMessage() : "未知错误"));
+                }
+            });
     }
     
     /**
      * 初始化SDK
      */
     private void initSDK() {
-        RCSDKManager.initSDK(this, new SDKManagerCallBack() {
+        // TODO 初始化SDK,初始化一次即可
+        RCSDKManager.INSTANCE.initSDK(this, new SDKManagerCallBack() {
             @Override
             public void onRcConnected() {
                 Log.d("MainActivity", "遥控器连接成功");
@@ -499,10 +392,27 @@ public class MainActivity extends AppCompatActivity {
         });
         
         // 设置在主线程回调
-        RCSDKManager.setMainThreadCallBack(true);
+        RCSDKManager.INSTANCE.setMainThreadCallBack(true);
         
         // 连接到遥控器
-        RCSDKManager.connectToRC();
+        RCSDKManager.INSTANCE.connectToRC();
+        
+        // 注册信号强度监听器
+        keySignalQualityListener = new KeyListener<Integer>() {
+            @Override
+            public void onValueChange(Integer oldValue, Integer newValue) {
+                // newValue 是信号强度百分比 (0-100)
+                currentSignalStrength = newValue != null ? newValue : 0;
+                // 在主线程更新UI
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateSignalDisplay();
+                    }
+                });
+            }
+        };
+        KeyManager.INSTANCE.listen(AirLinkKey.INSTANCE.getKeySignalQuality(), keySignalQualityListener);
     }
     
     /**
@@ -510,34 +420,43 @@ public class MainActivity extends AppCompatActivity {
      */
     private void createUDPPipeline() {
         // 创建UDP管道：本地端口14551，发送到127.0.0.1:14552
-        udpPipeline = PipelineManager.createUDPPipeline(14551, "127.0.0.1", 14552);
+        udpPipeline = PipelineManager.INSTANCE.createUDPPipeline(14551, "127.0.0.1", 14552);
         
         if (udpPipeline != null) {
             // 设置通信监听器
-            udpPipeline.onCommListener = new CommListener() {
+            udpPipeline.setOnCommListener(new CommListener() {
                 @Override
                 public void onConnectSuccess() {
                     Log.d("UDP", "UDP管道连接成功");
-                    runOnUiThread(() -> {
-                        useRealData = true; // 切换到使用真实数据
-                        Toast.makeText(MainActivity.this, "UDP连接成功，开始接收数据", Toast.LENGTH_SHORT).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            useRealData = true; // 切换到使用真实数据
+                            Toast.makeText(MainActivity.this, "UDP连接成功，开始接收数据", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
                 
                 @Override
                 public void onConnectFail(SkyException e) {
                     Log.e("UDP", "UDP管道连接失败: " + (e != null ? e.getMessage() : "未知错误"));
-                    runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "UDP连接失败", Toast.LENGTH_SHORT).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "UDP连接失败", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
                 
                 @Override
                 public void onDisconnect() {
                     Log.d("UDP", "UDP管道断开连接");
-                    runOnUiThread(() -> {
-                        useRealData = false; // 切换回模拟数据
-                        Toast.makeText(MainActivity.this, "UDP断开连接", Toast.LENGTH_SHORT).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            useRealData = false; // 切换回模拟数据
+                            Toast.makeText(MainActivity.this, "UDP断开连接", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
                 
@@ -553,12 +472,15 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void onParseSuccess(float boomAngle, float stickAngle, float bucketAngle) {
                                     // 在主线程更新UI
-                                    runOnUiThread(() -> {
-                                        realBoomAngle = boomAngle;
-                                        realStickAngle = stickAngle;
-                                        realBucketAngle = bucketAngle;
-                                        // 立即更新角度显示
-                                        updateAngles();
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            realBoomAngle = boomAngle;
+                                            realStickAngle = stickAngle;
+                                            realBucketAngle = bucketAngle;
+                                            // 立即更新角度显示
+                                            updateAngles();
+                                        }
                                     });
                                 }
                                 
@@ -572,10 +494,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
-            };
+            });
             
             // 连接UDP管道
-            PipelineManager.connectPipeline(udpPipeline);
+            PipelineManager.INSTANCE.connectPipeline(udpPipeline);
         } else {
             Log.e("UDP", "创建UDP管道失败");
             Toast.makeText(this, "创建UDP管道失败", Toast.LENGTH_SHORT).show();
@@ -598,11 +520,17 @@ public class MainActivity extends AppCompatActivity {
         
         // 断开UDP管道
         if (udpPipeline != null) {
-            PipelineManager.disconnectPipeline(udpPipeline);
+            PipelineManager.INSTANCE.disconnectPipeline(udpPipeline);
             udpPipeline = null;
         }
         
         // 断开遥控器连接
-        RCSDKManager.disconnectRC();
+        RCSDKManager.INSTANCE.disconnectRC();
+        
+        // 取消信号强度监听
+        if (keySignalQualityListener != null) {
+            KeyManager.INSTANCE.cancelListen(keySignalQualityListener);
+            keySignalQualityListener = null;
+        }
     }
 }

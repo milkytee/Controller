@@ -90,6 +90,7 @@ public class IMUDataParser {
             return false;
         }
         
+        
         // 4. 解析角度数据
         try {
             float boomAngle = parseBCDAngle(data, BOOM_START);
