@@ -63,13 +63,11 @@
     </LinearLayout>
 
     <!-- 背景图片/视频流（从左边开始，占据到右侧面板前的所有空间） -->
-    <ImageView
-        android:id="@+id/backgroundImage"
+    <com.skydroid.fpvplayer.FPVWidget
+        android:id="@+id/fpvWidget"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:scaleType="fitCenter"
-        android:alpha="1.0"
-        android:src="@drawable/land"
+        android:background="#FF000000"
         app:layout_constraintTop_toBottomOf="@id/topStatusBar"
         app:layout_constraintBottom_toTopOf="@id/controlButtons"
         app:layout_constraintStart_toStartOf="parent"
@@ -311,7 +309,7 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:padding="6dp"
-        app:layout_constraintTop_toBottomOf="@id/backgroundImage"
+        app:layout_constraintTop_toBottomOf="@id/fpvWidget"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">

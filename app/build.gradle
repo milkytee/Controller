@@ -34,6 +34,13 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
     // RCSDK依赖
     implementation files('libs/rcsdk-v1.8.4.aar')
+    
+    // FPVPlayer 相关依赖
+    implementation files('libs/fpvplayer-v3.3.7.aar')
+    implementation files('libs/sky-ijkplayer-v1.1.aar')
+    implementation files('libs/isoparser-1.1.9.jar')
+    // Kotlin 标准库（FPVWidget 是 Kotlin 类，需要运行时支持）
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

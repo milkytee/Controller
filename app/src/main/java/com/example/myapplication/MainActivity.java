@@ -8,13 +8,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.skydroid.rcsdk.RCSDKManager;
 import com.skydroid.rcsdk.KeyManager;
@@ -28,6 +31,10 @@ import com.skydroid.rcsdk.key.AirLinkKey;
 import com.skydroid.rcsdk.common.callback.KeyListener;
 import com.skydroid.rcsdk.common.callback.CompletionCallbackWith;
 
+import com.skydroid.fpvplayer.FPVWidget;
+import com.skydroid.fpvplayer.PlayerType;
+import com.skydroid.fpvplayer.RtspTransport;
+import com.skydroid.fpvplayer.*;
 import android.widget.RelativeLayout;
 
 import java.text.SimpleDateFormat;
@@ -54,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressDigDepth;
     
     private ExcavatorPostureView excavatorPostureView;
-    private ImageView backgroundImage;
+    private FPVWidget fpvWidget;
     
     private Button btnLights;
     private Button btnHorn;
@@ -114,6 +121,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // 设置全屏模式
+        setFullScreenMode();
+        
         setContentView(R.layout.activity_main);
         
         initViews();
@@ -121,6 +132,35 @@ public class MainActivity extends AppCompatActivity {
         initButtons();
         initSDK();
         startDataUpdates();
+        initVideoPlayer();
+    }
+    
+    /**
+     * 设置全屏模式（隐藏状态栏和导航栏）
+     */
+    private void setFullScreenMode() {
+        // 使用 WindowCompat 和 WindowInsetsControllerCompat 实现兼容性全屏
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        
+        if (windowInsetsController != null) {
+            // 隐藏状态栏和导航栏
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+            // 设置沉浸式模式，让内容可以延伸到系统栏区域
+            windowInsetsController.setSystemBarsBehavior(
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            );
+        }
+
+    }
+    
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            // 当窗口获得焦点时，确保全屏模式
+            setFullScreenMode();
+        }
     }
     
     private void initViews() {
@@ -137,11 +177,7 @@ public class MainActivity extends AppCompatActivity {
         progressDigDepth = findViewById(R.id.progressDigDepth);
         
         excavatorPostureView = findViewById(R.id.excavatorPostureView);
-        backgroundImage = findViewById(R.id.backgroundImage);
-        
-        // 设置背景图片（后续可替换为视频流）
-        // 这里使用一个占位图片，实际使用时可以替换为视频流View
-        backgroundImage.setImageResource(R.drawable.land);
+        fpvWidget = findViewById(R.id.fpvWidget);
     }
     
     private void initAngleSets() {
@@ -152,6 +188,28 @@ public class MainActivity extends AppCompatActivity {
         angleSets.add(new AngleSet(-25f, 50f, 15f));   // 中间位置
         angleSets.add(new AngleSet(-35f, 40f, 5f));    // 另一个位置
         angleSets.add(new AngleSet(-15f, 70f, 25f));   // 最大伸展
+    }
+    
+    /**
+     * 初始化视频播放器
+     */
+    private void initVideoPlayer() {
+        if (fpvWidget != null) {
+            // 使用硬解码
+            fpvWidget.setUsingMediaCodec(true);
+
+            // 设置固定的RTSP地址
+            fpvWidget.setUrl("rtsp://192.168.144.100:554/stream1");
+            
+            // 使用云卓播放器
+            fpvWidget.setPlayerType(PlayerType.ONLY_SKY);
+            
+            // RTSP流TCP/UDP连接方式（自动选择）
+            fpvWidget.setRtspTranstype(RtspTransport.AUTO);
+            
+            // 开始播放
+            fpvWidget.start();
+        }
     }
     
     private void initButtons() {
@@ -278,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void updateSignalDisplay() {
         if (tvRcSignal != null) {
-            tvRcSignal.setText(currentSignalStrength + "%");
+            tvRcSignal.setText("信号强度 "+ currentSignalStrength + "%");
         }
     }
     
@@ -507,6 +565,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        
+        // 停止视频播放
+        if (fpvWidget != null) {
+            fpvWidget.stop();
+        }
         
         // 停止主数据更新
         if (handler != null && updateRunnable != null) {
