@@ -95,6 +95,12 @@ public class MainActivity extends AppCompatActivity {
     private float realStickAngle = 0f;
     private float realBucketAngle = 0f;
     
+    // UDP数据接收超时相关
+    private Handler udpTimeoutHandler;
+    private Runnable udpTimeoutRunnable;
+    private static final long UDP_TIMEOUT_MS = 5000; // 5秒没收到数据就切换回模拟数据
+    private long lastDataReceiveTime = 0;
+    
     // 摇杆值
     private int ch1Value = 0; // 右摇杆左右
     private int ch2Value = 0; // 右摇杆上下
@@ -179,15 +185,21 @@ public class MainActivity extends AppCompatActivity {
         excavatorPostureView = findViewById(R.id.excavatorPostureView);
         fpvWidget = findViewById(R.id.fpvWidget);
     }
-    
+
     private void initAngleSets() {
-        // 初始化几组机械臂角度数据用于轮换
-        angleSets.add(new AngleSet(-30f, 45f, 10f));   // 初始位置
-        angleSets.add(new AngleSet(-20f, 60f, 20f));   // 伸展位置
-        angleSets.add(new AngleSet(-40f, 30f, -5f));   // 收缩位置
-        angleSets.add(new AngleSet(-25f, 50f, 15f));   // 中间位置
-        angleSets.add(new AngleSet(-35f, 40f, 5f));    // 另一个位置
-        angleSets.add(new AngleSet(-15f, 70f, 25f));   // 最大伸展
+        // 初始化5组机械臂角度数据，使用绝对值系统
+        // 0度=水平，正值=向上，负值=向下
+        // 相同角度时，大臂、小臂、铲斗成一条直线
+        
+        angleSets.add(new AngleSet(0f, 0f, 0f));        // 第1组：初始位置（所有角度0度，水平）
+        
+        // 模拟真实挖掘机工作情况
+        angleSets.add(new AngleSet(-25f, -40f, -20f));  // 第2组：挖掘位置（大臂向下25度，小臂向下弯曲40度，铲斗向下20度）
+        angleSets.add(new AngleSet(-30f, -50f, -25f));  // 第3组：深挖位置（大臂向下30度，小臂向下弯曲50度，铲斗向下25度）
+        angleSets.add(new AngleSet(-15f, -30f, -15f));  // 第4组：浅挖位置（大臂向下15度，小臂向下弯曲30度，铲斗向下15度）
+        angleSets.add(new AngleSet(15f, 20f, 5f));      // 第5组：举升位置（大臂向上15度，小臂向上20度，铲斗接近水平5度）
+        angleSets.add(new AngleSet(10f, 25f, 0f));      // 第6组：伸展位置（大臂向上10度，小臂向上25度，铲斗水平0度）
+        angleSets.add(new AngleSet(-20f, -35f, -18f));  // 第7组：收缩位置（大臂向下20度，小臂向下弯曲35度，铲斗向下18度）
     }
     
     /**
@@ -489,8 +501,10 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            useRealData = true; // 切换到使用真实数据
-                            Toast.makeText(MainActivity.this, "UDP连接成功，开始接收数据", Toast.LENGTH_SHORT).show();
+                            // 连接成功但不立即切换，等待收到数据后再切换
+                            // useRealData 保持 false，直到收到第一个数据包
+                            lastDataReceiveTime = System.currentTimeMillis();
+                            Toast.makeText(MainActivity.this, "UDP连接成功，等待数据...", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -501,7 +515,8 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(MainActivity.this, "UDP连接失败", Toast.LENGTH_SHORT).show();
+                            useRealData = false; // 连接失败，使用模拟数据
+                            Toast.makeText(MainActivity.this, "UDP连接失败，使用模拟数据", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -525,6 +540,23 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("UDP", "收到数据，长度: " + data.length);
                         
                         if (data.length == 14) {
+                            // 更新最后接收数据的时间
+                            lastDataReceiveTime = System.currentTimeMillis();
+                            
+                            // 如果之前是模拟数据，切换到真实数据
+                            if (!useRealData) {
+                                useRealData = true;
+                                Log.d("UDP", "收到UDP数据，切换到真实数据模式");
+                            }
+                            
+                            // 取消之前的超时检查
+                            if (udpTimeoutHandler != null && udpTimeoutRunnable != null) {
+                                udpTimeoutHandler.removeCallbacks(udpTimeoutRunnable);
+                            }
+                            
+                            // 重新启动超时检查
+                            startUDPTimeoutCheck();
+                            
                             // 解析数据
                             IMUDataParser.parseData(data, new IMUDataParser.ParseResultCallback() {
                                 @Override
@@ -558,8 +590,46 @@ public class MainActivity extends AppCompatActivity {
             PipelineManager.INSTANCE.connectPipeline(udpPipeline);
         } else {
             Log.e("UDP", "创建UDP管道失败");
-            Toast.makeText(this, "创建UDP管道失败", Toast.LENGTH_SHORT).show();
+            useRealData = false; // 创建失败，使用模拟数据
+            Toast.makeText(this, "创建UDP管道失败，使用模拟数据", Toast.LENGTH_SHORT).show();
         }
+    }
+    
+    /**
+     * 启动UDP数据接收超时检查
+     * 如果长时间没收到数据，自动切换回模拟数据
+     */
+    private void startUDPTimeoutCheck() {
+        if (udpTimeoutHandler == null) {
+            udpTimeoutHandler = new Handler(Looper.getMainLooper());
+        }
+        
+        if (udpTimeoutRunnable != null) {
+            udpTimeoutHandler.removeCallbacks(udpTimeoutRunnable);
+        }
+        
+        udpTimeoutRunnable = new Runnable() {
+            @Override
+            public void run() {
+                long currentTime = System.currentTimeMillis();
+                if (useRealData && (currentTime - lastDataReceiveTime) > UDP_TIMEOUT_MS) {
+                    // 超过5秒没收到数据，切换回模拟数据
+                    useRealData = false;
+                    Log.w("UDP", "UDP数据接收超时，切换回模拟数据");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "UDP数据超时，使用模拟数据", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else if (useRealData) {
+                    // 继续检查
+                    udpTimeoutHandler.postDelayed(this, 1000); // 每秒检查一次
+                }
+            }
+        };
+        
+        udpTimeoutHandler.postDelayed(udpTimeoutRunnable, UDP_TIMEOUT_MS);
     }
     
     @Override
@@ -579,6 +649,11 @@ public class MainActivity extends AppCompatActivity {
         // 停止摇杆值更新
         if (joystickHandler != null && joystickUpdateRunnable != null) {
             joystickHandler.removeCallbacks(joystickUpdateRunnable);
+        }
+        
+        // 停止UDP超时检查
+        if (udpTimeoutHandler != null && udpTimeoutRunnable != null) {
+            udpTimeoutHandler.removeCallbacks(udpTimeoutRunnable);
         }
         
         // 断开UDP管道
