@@ -117,30 +117,40 @@ public class IMUDataParser {
     
     /**
      * 解析BCD编码的角度值
-     * 格式：3字节 BCD码，S X XX xx
-     * - 字节1: S（符号位，最高位，0=正，1=负）+ X（整数高位，低7位）
-     * - 字节2: XX（整数部分，BCD码）
-     * - 字节3: xx（小数部分，BCD码）
+     * 格式：3字节 BCD码
+     * - 字节1: 高4位（bit 7-4）为符号位（0000=正，0001=负），低4位（bit 3-0）为整数高位（0-9）
+     * - 字节2: XX（整数部分，BCD码，0-99）
+     * - 字节3: xx（小数部分，BCD码，0-99）
      * 
      * @param data 数据包
      * @param offset 角度数据在数据包中的起始位置
      * @return 解析后的角度值（浮点数）
      */
     private static float parseBCDAngle(byte[] data, int offset) {
-        // 字节1: S X
+        // 字节1: 高4位符号位 + 低4位数字
         byte byte1 = data[offset];
-        boolean isNegative = ((byte1 & 0x80) != 0);  // 最高位为符号位
-        int integerHigh = (byte1 & 0x7F);             // 低7位为整数高位
         
-        // 字节2: XX（BCD码，例如0x12表示12）
+        // 先转换为无符号整数（0-255），确保位运算正确
+        int byte1Unsigned = byte1 & 0xFF;
+        
+        // 提取高4位（bit 7-4）用于符号判断
+        // 0000 = 正数，0001 = 负数
+        int high4Bits = (byte1Unsigned >> 4) & 0x0F;
+        boolean isNegative = (high4Bits == 0x01);  // 高4位为0001表示负数
+        
+        // 提取低4位（bit 3-0）作为整数高位（0-9）
+        int integerHigh = byte1Unsigned & 0x0F;
+        
+        // 字节2: XX（BCD码，例如0x35表示35，范围0-99）
         byte byte2 = data[offset + 1];
         int integerLow = ((byte2 >> 4) & 0x0F) * 10 + (byte2 & 0x0F);
         
-        // 字节3: xx（BCD码，例如0x34表示34）
+        // 字节3: xx（BCD码，例如0x36表示36，范围0-99）
         byte byte3 = data[offset + 2];
         int decimal = ((byte3 >> 4) & 0x0F) * 10 + (byte3 & 0x0F);
         
         // 组合整数部分：X * 100 + XX
+        // integerHigh范围0-9，所以最大是9*100+99=999度
         int integerPart = integerHigh * 100 + integerLow;
         
         // 组合小数部分：xx / 100.0
@@ -149,7 +159,7 @@ public class IMUDataParser {
         // 最终角度值
         float angle = integerPart + decimalPart;
         
-        // 应用符号
+        // 应用符号：高4位0000=正，0001=负
         return isNegative ? -angle : angle;
     }
 }

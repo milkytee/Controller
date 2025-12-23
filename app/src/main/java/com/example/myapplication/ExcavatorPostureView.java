@@ -21,7 +21,7 @@ public class ExcavatorPostureView extends View {
     private float bucketAngle = 0f;  // 初始角度0度
     
     private float boomLength = 0.35f;  // 稍微改短一点
-    private float stickLength = 0.25f;  // 稍微改短一点
+    private float stickLength = 0.2f;  // 稍微改短一点
     private float bucketLength = 0.18f;  // 整体增大一点（从0.15f改为0.18f）
     
     public ExcavatorPostureView(Context context) {
@@ -78,24 +78,23 @@ public class ExcavatorPostureView extends View {
         // 绘制驾驶室
         drawCabCartoon(canvas, centerX, centerY - scale * 0.05f, scale);
         
-        // 绘制大臂（绝对值系统：0度水平，正值向上，负值向下）
-        // 由于机械臂在车身左边，需要加180度偏移
-        float boomAngleTotal = boomAngle + 180f;  // 0度时水平向左
+        // 绘制大臂（绝对值系统：0度垂直向上，正值继续向上，负值向下）
+        // 由于机械臂在车身左边，需要加90度偏移使0度时垂直向上
+        float boomAngleTotal = boomAngle + 180f;  // 0度时垂直向上
         float boomEndX = centerX + (float) (Math.cos(Math.toRadians(boomAngleTotal)) * boomLength * scale);
         float boomEndY = centerY - scale * 0.05f - (float) (Math.sin(Math.toRadians(boomAngleTotal)) * boomLength * scale);
         drawBoomCartoon(canvas, centerX, centerY - scale * 0.05f, boomEndX, boomEndY, scale);
         
-        // 绘制小臂（绝对值系统：0度水平，与大臂角度一致时成一条直线）
-        float stickAngleTotal = stickAngle + 180f;  // 绝对值，0度时水平向左
+        // 绘制小臂（绝对值系统：0度垂直向上，与大臂角度一致时成一条直线）
+        float stickAngleTotal = stickAngle - 90f;  // 0度时垂直向下
         float stickStartX = boomEndX;
         float stickStartY = boomEndY;
         float stickEndX = stickStartX + (float) (Math.cos(Math.toRadians(stickAngleTotal)) * stickLength * scale);
         float stickEndY = stickStartY - (float) (Math.sin(Math.toRadians(stickAngleTotal)) * stickLength * scale);
         drawStickCartoon(canvas, stickStartX, stickStartY, stickEndX, stickEndY, scale);
         
-        // 绘制铲斗（绝对值系统：0度时向外展开）
-        // 0度时铲斗向外展开，正值继续向外，负值向内收缩
-        float bucketAngleTotal = bucketAngle ;  // 让0度时向外展开
+        // 绘制铲斗（绝对值系统：0度时垂直向上）
+        float bucketAngleTotal = bucketAngle - 90f;  // 0度时垂直向下
         float bucketStartX = stickEndX;
         float bucketStartY = stickEndY;
         drawBucketCartoon(canvas, bucketStartX, bucketStartY, bucketAngleTotal, scale);
@@ -220,42 +219,101 @@ public class ExcavatorPostureView extends View {
         borderPaint.setStrokeWidth(3f);
         canvas.drawPath(windowPath, borderPaint);
     }
-    
+
     private void drawBoomCartoon(Canvas canvas, float startX, float startY, float endX, float endY, float scale) {
-        // 大臂（直线，梯形）
+        // 大臂（折线，转折点在中点，向上折线）
         float baseWidth = scale * 0.08f;
         float tipWidth = scale * 0.06f;
-        
-        // 计算大臂的角度
-        double angle = Math.atan2(startY - endY, endX - startX);
-        float perpAngle = (float)(angle + Math.PI/2);
-        float basePerpX = (float)(Math.cos(perpAngle) * baseWidth/2);
-        float basePerpY = (float)(-Math.sin(perpAngle) * baseWidth/2);
-        float tipPerpX = (float)(Math.cos(perpAngle) * tipWidth/2);
-        float tipPerpY = (float)(-Math.sin(perpAngle) * tipWidth/2);
-        
+
+        // 计算大臂的总长度和方向
+        float dx = endX - startX;
+        float dy = endY - startY;
+        double totalAngle = Math.atan2(-dy, dx);
+
+        // 转折点位置：在起点到终点的中点（50%处）
+        float turnPointRatio = 0.5f;  // 转折点距离起点的比例，放在中点
+        float turnPointX = startX + dx * turnPointRatio;
+        float turnPointY = startY + dy * turnPointRatio;
+
+        // 转折点向上偏移，形成明显的折线效果
+        // 偏移方向：垂直于大臂方向，向上（相对于大臂方向）
+        float perpAngle = (float)(totalAngle + Math.PI/2);  // 垂直于大臂的方向
+        float turnOffset = scale * 0.08f;  // 偏移量，让折线更明显
+        // 向下偏移：
+        turnPointX -= (float)(Math.cos(perpAngle) * turnOffset);
+        turnPointY += (float)(Math.sin(perpAngle) * turnOffset);
+
+        // 计算起点到转折点的角度（转折后的实际角度）
+        float dx1 = turnPointX - startX;
+        float dy1 = turnPointY - startY;
+        double angle1 = Math.atan2(-dy1, dx1);
+        float perpAngle1 = (float)(angle1 + Math.PI/2);
+        float basePerpX = (float)(Math.cos(perpAngle1) * baseWidth/2);
+        float basePerpY = (float)(-Math.sin(perpAngle1) * baseWidth/2);
+
+        // 计算转折点到终点的角度（转折后的实际角度）
+        float dx2 = endX - turnPointX;
+        float dy2 = endY - turnPointY;
+        double angle2 = Math.atan2(-dy2, dx2);
+        float perpAngle2 = (float)(angle2 + Math.PI/2);
+        float midPerpX = (float)(Math.cos(perpAngle2) * (baseWidth + tipWidth)/4);
+        float midPerpY = (float)(-Math.sin(perpAngle2) * (baseWidth + tipWidth)/4);
+        float tipPerpX = (float)(Math.cos(perpAngle2) * tipWidth/2);
+        float tipPerpY = (float)(-Math.sin(perpAngle2) * tipWidth/2);
+
+        // 构建平滑折线路径（使用曲线连接转折处）
         Path boomPath = new Path();
+        // 起点左侧
         boomPath.moveTo(startX + basePerpX, startY + basePerpY);
-        boomPath.lineTo(endX + tipPerpX, endY + tipPerpY);
-        boomPath.lineTo(endX - tipPerpX, endY - tipPerpY);
-        boomPath.lineTo(startX - basePerpX, startY - basePerpY);
+
+        // 到转折点左侧（使用二次贝塞尔曲线平滑连接）
+        float smoothRadius = scale * 0.025f;  // 增大平滑半径，让过渡更圆滑
+        float smoothDist = scale * 0.03f;  // 控制点距离转折点的距离，让转折处更平滑
+        float controlX1 = turnPointX + midPerpX - (float)(Math.cos(angle1) * smoothDist);
+        float controlY1 = turnPointY + midPerpY - (float)(-Math.sin(angle1) * smoothDist);
+        boomPath.quadTo(controlX1, controlY1, turnPointX + midPerpX, turnPointY + midPerpY);
+
+        // 从转折点到终点左侧（使用二次贝塞尔曲线平滑连接）
+        float controlX2 = turnPointX + midPerpX + (float)(Math.cos(angle2) * smoothDist);
+        float controlY2 = turnPointY + midPerpY + (float)(-Math.sin(angle2) * smoothDist);
+        boomPath.quadTo(controlX2, controlY2, endX + tipPerpX, endY + tipPerpY);
+
+        // 到终点右侧（使用曲线）
+        float controlX3 = endX - tipPerpX + (float)(Math.cos(angle2) * smoothRadius);
+        float controlY3 = endY - tipPerpY + (float)(-Math.sin(angle2) * smoothRadius);
+        boomPath.quadTo(controlX3, controlY3, endX - tipPerpX, endY - tipPerpY);
+
+        // 从终点回到转折点右侧（使用曲线）
+        float controlX4 = turnPointX - midPerpX + (float)(Math.cos(angle2) * smoothDist);
+        float controlY4 = turnPointY - midPerpY + (float)(-Math.sin(angle2) * smoothDist);
+        boomPath.quadTo(controlX4, controlY4, turnPointX - midPerpX, turnPointY - midPerpY);
+
+        // 从转折点回到起点右侧（使用曲线）
+        float controlX5 = turnPointX - midPerpX - (float)(Math.cos(angle1) * smoothDist);
+        float controlY5 = turnPointY - midPerpY - (float)(-Math.sin(angle1) * smoothDist);
+        boomPath.quadTo(controlX5, controlY5, startX - basePerpX, startY - basePerpY);
+
         boomPath.close();
-        
+
         // 填充（黄色）
         paint.setColor(YELLOW_MAIN);
+        paint.setStyle(Paint.Style.FILL);
         canvas.drawPath(boomPath, paint);
-        
+
         // 边框
         borderPaint.setStrokeWidth(4f);
+        borderPaint.setStyle(Paint.Style.STROKE);
         canvas.drawPath(boomPath, borderPaint);
-        
+
         // 连接点（小圆形，灰色填充）
         float jointRadius = baseWidth * 0.7f;
         paint.setColor(Color.parseColor("#888888"));
+        paint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(startX, startY, jointRadius, paint);
         borderPaint.setStrokeWidth(3f);
+        borderPaint.setStyle(Paint.Style.STROKE);
         canvas.drawCircle(startX, startY, jointRadius, borderPaint);
-        
+
         // 末端连接点
         float tipRadius = tipWidth * 0.7f;
         canvas.drawCircle(endX, endY, tipRadius, paint);

@@ -187,19 +187,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initAngleSets() {
-        // 初始化5组机械臂角度数据，使用绝对值系统
+        // 初始化机械臂角度数据，使用绝对值系统
         // 0度=水平，正值=向上，负值=向下
-        // 相同角度时，大臂、小臂、铲斗成一条直线
+        // 铲斗：正值=展开，负值=收回
         
-        angleSets.add(new AngleSet(0f, 0f, 0f));        // 第1组：初始位置（所有角度0度，水平）
+        angleSets.add(new AngleSet(0f, 0f, 0f));        // 第1组：初始位置（所有角度0度）
         
-        // 模拟真实挖掘机工作情况
-        angleSets.add(new AngleSet(-25f, -40f, -20f));  // 第2组：挖掘位置（大臂向下25度，小臂向下弯曲40度，铲斗向下20度）
-        angleSets.add(new AngleSet(-30f, -50f, -25f));  // 第3组：深挖位置（大臂向下30度，小臂向下弯曲50度，铲斗向下25度）
-        angleSets.add(new AngleSet(-15f, -30f, -15f));  // 第4组：浅挖位置（大臂向下15度，小臂向下弯曲30度，铲斗向下15度）
-        angleSets.add(new AngleSet(15f, 20f, 5f));      // 第5组：举升位置（大臂向上15度，小臂向上20度，铲斗接近水平5度）
-        angleSets.add(new AngleSet(10f, 25f, 0f));      // 第6组：伸展位置（大臂向上10度，小臂向上25度，铲斗水平0度）
-        angleSets.add(new AngleSet(-20f, -35f, -18f));  // 第7组：收缩位置（大臂向下20度，小臂向下弯曲35度，铲斗向下18度）
+        // 挖掘动作（向下时铲斗展开）
+        angleSets.add(new AngleSet(-25f, -40f, 25f));   // 第2组：挖掘位置（大臂向下25度，小臂向下40度，铲斗展开25度）
+        angleSets.add(new AngleSet(-30f, -50f, 30f));   // 第3组：深挖位置（大臂向下30度，小臂向下50度，铲斗展开30度）
+        angleSets.add(new AngleSet(-15f, -30f, 20f));   // 第4组：浅挖位置（大臂向下15度，小臂向下30度，铲斗展开20度）
+        angleSets.add(new AngleSet(-20f, -35f, 28f));   // 第5组：挖掘并展开（大臂向下20度，小臂向下35度，铲斗展开28度）
+        
+        // 举升动作（向上时铲斗收回）
+        angleSets.add(new AngleSet(15f, 20f, -15f));    // 第6组：举升位置（大臂向上15度，小臂向上20度，铲斗收回15度）
+        angleSets.add(new AngleSet(10f, 25f, -10f));    // 第7组：伸展位置（大臂向上10度，小臂向上25度，铲斗收回10度）
+        angleSets.add(new AngleSet(20f, 15f, -20f));    // 第8组：高举位置（大臂向上20度，小臂向上15度，铲斗收回20度）
+        angleSets.add(new AngleSet(5f, 30f, -5f));      // 第9组：前伸位置（大臂向上5度，小臂向上30度，铲斗收回5度）
+        
+        // 过渡动作
+        angleSets.add(new AngleSet(-10f, -20f, 15f));   // 第10组：准备挖掘（大臂向下10度，小臂向下20度，铲斗展开15度）
+        angleSets.add(new AngleSet(8f, 18f, -12f));     // 第11组：准备倾倒（大臂向上8度，小臂向上18度，铲斗收回12度）
+        angleSets.add(new AngleSet(-18f, -32f, 22f));   // 第12组：持续挖掘（大臂向下18度，小臂向下32度，铲斗展开22度）
+        angleSets.add(new AngleSet(12f, 22f, -18f));    // 第13组：举升倾倒（大臂向上12度，小臂向上22度，铲斗收回18度）
     }
     
     /**
@@ -292,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 updateAllData();
-                handler.postDelayed(this, 1000); // 每秒更新一次
+                handler.postDelayed(this, 500); // 每秒更新一次
             }
         };
         
@@ -351,33 +361,33 @@ public class MainActivity extends AppCompatActivity {
             tvRcSignal.setText("信号强度 "+ currentSignalStrength + "%");
         }
     }
-    
+
     private void updateAngles() {
         float boom, stick, bucket;
-        
+
         if (useRealData) {
             // 使用真实UDP数据
             boom = realBoomAngle;
             stick = realStickAngle;
             bucket = realBucketAngle;
         } else {
-            // 使用模拟数据（每3秒切换一次角度）
-        angleUpdateCounter++;
-        if (angleUpdateCounter >= 3) {
-            angleIndex = (angleIndex + 1) % angleSets.size();
-            angleUpdateCounter = 0;
-        }
-        
-        // 轮换角度数据
-        AngleSet currentSet = angleSets.get(angleIndex);
+            // 使用模拟数据（每1秒切换一次角度）
+            angleUpdateCounter++;
+            if (angleUpdateCounter >= 1) {
+                angleIndex = (angleIndex + 1) % angleSets.size();
+                angleUpdateCounter = 0;
+            }
+
+            // 轮换角度数据
+            AngleSet currentSet = angleSets.get(angleIndex);
             boom = currentSet.boom;
             stick = currentSet.stick;
             bucket = currentSet.bucket;
         }
-        
+
         // 更新视图
         excavatorPostureView.setAngles(boom, stick, bucket);
-        
+
         // 更新文本显示
         tvBoomAngle.setText(String.format(Locale.getDefault(), "BOOM: %.2f°", boom));
         tvStickAngle.setText(String.format(Locale.getDefault(), "STICK: %.2f°", stick));
