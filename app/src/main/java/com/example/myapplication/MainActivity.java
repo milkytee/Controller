@@ -10,9 +10,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
@@ -68,6 +71,10 @@ public class MainActivity extends AppCompatActivity {
     private Button btnModeSwitch;
     private Button btnHome;
     private Button btnStop;
+    
+    // 视频地址编辑相关
+    private EditText etVideoUrl;
+    private Button btnUpdateVideoUrl;
     
     // 驾驶模式状态
     private boolean isManualMode = true;
@@ -139,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
         initSDK();
         startDataUpdates();
         initVideoPlayer();
+        initVideoUrlEditor();
     }
     
     /**
@@ -184,6 +192,10 @@ public class MainActivity extends AppCompatActivity {
         
         excavatorPostureView = findViewById(R.id.excavatorPostureView);
         fpvWidget = findViewById(R.id.fpvWidget);
+        
+        // 视频地址编辑相关
+        etVideoUrl = findViewById(R.id.etVideoUrl);
+        btnUpdateVideoUrl = findViewById(R.id.btnUpdateVideoUrl);
     }
 
     private void initAngleSets() {
@@ -231,6 +243,81 @@ public class MainActivity extends AppCompatActivity {
             
             // 开始播放
             fpvWidget.start();
+        }
+    }
+    
+    /**
+     * 初始化视频地址编辑器
+     */
+    private void initVideoUrlEditor() {
+        // 设置初始地址
+        if (etVideoUrl != null) {
+            etVideoUrl.setText("rtsp://192.168.144.100:554/stream1");
+        }
+        
+        // 更新按钮点击事件
+        if (btnUpdateVideoUrl != null) {
+            btnUpdateVideoUrl.setOnClickListener(v -> {
+                String newUrl = etVideoUrl.getText().toString().trim();
+                if (!newUrl.isEmpty()) {
+                    updateVideoUrl(newUrl);
+                    // 隐藏键盘
+                    hideKeyboard();
+                } else {
+                    Toast.makeText(this, "请输入有效的RTSP地址", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        
+        // EditText输入完成事件（按回车或完成键）
+        if (etVideoUrl != null) {
+            etVideoUrl.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                    String newUrl = etVideoUrl.getText().toString().trim();
+                    if (!newUrl.isEmpty()) {
+                        updateVideoUrl(newUrl);
+                        hideKeyboard();
+                    }
+                    return true;
+                }
+                return false;
+            });
+        }
+    }
+    
+    /**
+     * 更新视频地址
+     */
+    private void updateVideoUrl(String url) {
+        if (fpvWidget != null) {
+            try {
+                // 停止当前播放
+                fpvWidget.stop();
+                
+                // 设置新地址
+                fpvWidget.setUrl(url);
+                
+                // 重新开始播放
+                fpvWidget.start();
+                
+                Toast.makeText(this, "视频地址已更新", Toast.LENGTH_SHORT).show();
+                Log.d("MainActivity", "视频地址更新为: " + url);
+            } catch (Exception e) {
+                Log.e("MainActivity", "更新视频地址失败: " + e.getMessage(), e);
+                Toast.makeText(this, "更新失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+    
+    /**
+     * 隐藏键盘
+     */
+    private void hideKeyboard() {
+        if (etVideoUrl != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(etVideoUrl.getWindowToken(), 0);
+            }
         }
     }
     

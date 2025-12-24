@@ -74,6 +74,46 @@
         app:layout_constraintEnd_toStartOf="@id/rightPanel"
         tools:ignore="ContentDescription" />
 
+    <!-- 视频地址编辑框（一直显示在视频画面上） -->
+    <LinearLayout
+        android:id="@+id/videoUrlEditor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#CC000000"
+        android:padding="8dp"
+        android:layout_margin="12dp"
+        app:layout_constraintTop_toTopOf="@id/fpvWidget"
+        app:layout_constraintEnd_toEndOf="@id/fpvWidget">
+
+        <EditText
+            android:id="@+id/etVideoUrl"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:hint="输入RTSP地址"
+            android:text="rtsp://192.168.144.100:554/stream1"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#AAAAAA"
+            android:background="#80000000"
+            android:padding="8dp"
+            android:textSize="12sp"
+            android:inputType="textUri"
+            android:imeOptions="actionDone"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/btnUpdateVideoUrl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="更新"
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:padding="8dp"
+            android:minWidth="60dp"
+            android:backgroundTint="#00AAFF"
+            style="@style/Widget.Material3.Button" />
+    </LinearLayout>
+
 
     <!-- 右侧面板容器 -->
     <androidx.constraintlayout.widget.ConstraintLayout
