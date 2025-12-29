@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler;
     private Runnable updateRunnable;
     
-    // 摇杆值更新Handler（独立更新，100ms频率）
+    // 摇杆值更新Handler（独立更新）
     private Handler joystickHandler;
     private Runnable joystickUpdateRunnable;
     
@@ -472,10 +472,11 @@ public class MainActivity extends AppCompatActivity {
             bucket = currentSet.bucket;
         }
 
-        // 更新视图
-        excavatorPostureView.setAngles(boom, stick, bucket);
+        // 更新视图（大臂角度需要减去158度偏移用于绘制，使0度时显示为-158度的画面）
+        float drawBoomAngle = boom - 158f;  // 绘制角度 = 原始角度 - 158
+        excavatorPostureView.setAngles(drawBoomAngle, stick, bucket);
 
-        // 更新文本显示
+        // 更新文本显示（使用原始角度值）
         tvBoomAngle.setText(String.format(Locale.getDefault(), "BOOM: %.2f°", boom));
         tvStickAngle.setText(String.format(Locale.getDefault(), "STICK: %.2f°", stick));
         tvBucketAngle.setText(String.format(Locale.getDefault(), "BUCKET: %.2f°", bucket));

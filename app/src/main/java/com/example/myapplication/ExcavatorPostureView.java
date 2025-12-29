@@ -85,16 +85,16 @@ public class ExcavatorPostureView extends View {
         float boomEndY = centerY - scale * 0.05f - (float) (Math.sin(Math.toRadians(boomAngleTotal)) * boomLength * scale);
         drawBoomCartoon(canvas, centerX, centerY - scale * 0.05f, boomEndX, boomEndY, scale);
         
-        // 绘制小臂（绝对值系统：0度垂直向上，与大臂角度一致时成一条直线）
-        float stickAngleTotal = stickAngle - 90f;  // 0度时垂直向下
+        // 绘制小臂（角度系统：0度=向上，-90度=向左，90度=向右，-180度=向下）
+        float stickAngleTotal = stickAngle - 90f;  // 0度时垂直向上
         float stickStartX = boomEndX;
         float stickStartY = boomEndY;
         float stickEndX = stickStartX + (float) (Math.cos(Math.toRadians(stickAngleTotal)) * stickLength * scale);
         float stickEndY = stickStartY - (float) (Math.sin(Math.toRadians(stickAngleTotal)) * stickLength * scale);
         drawStickCartoon(canvas, stickStartX, stickStartY, stickEndX, stickEndY, scale);
         
-        // 绘制铲斗（绝对值系统：0度时垂直向上）
-        float bucketAngleTotal = bucketAngle - 90f;  // 0度时垂直向下
+        // 绘制铲斗（角度系统：0度=向上，-90度=向左，90度=向右，-180度=向下）
+        float bucketAngleTotal = bucketAngle - 90f;  // 0度时垂直向上
         float bucketStartX = stickEndX;
         float bucketStartY = stickEndY;
         drawBucketCartoon(canvas, bucketStartX, bucketStartY, bucketAngleTotal, scale);
