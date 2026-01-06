@@ -20,8 +20,8 @@ public class ExcavatorPostureView extends View {
     private float stickAngle = 0f;  // 初始角度0度
     private float bucketAngle = 0f;  // 初始角度0度
     
-    private float boomLength = 0.35f;  // 稍微改短一点
-    private float stickLength = 0.2f;  // 稍微改短一点
+    private float boomLength = 0.35f;  //
+    private float stickLength = 0.2f;  //
     private float bucketLength = 0.18f;  // 整体增大一点（从0.15f改为0.18f）
     
     public ExcavatorPostureView(Context context) {
