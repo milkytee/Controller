@@ -20,9 +20,9 @@ public class ExcavatorPostureView extends View {
     private float stickAngle = 0f;  // 初始角度0度
     private float bucketAngle = 0f;  // 初始角度0度
     
-    private float boomLength = 0.35f;  //
-    private float stickLength = 0.2f;  //
-    private float bucketLength = 0.18f;  // 整体增大一点（从0.15f改为0.18f）
+    private float boomLength = 0.35f;  //大臂
+    private float stickLength = 0.2f;
+    private float bucketLength = 0.18f;
     
     public ExcavatorPostureView(Context context) {
         super(context);
@@ -94,9 +94,10 @@ public class ExcavatorPostureView extends View {
         float stickEndY = stickStartY - (float) (Math.sin(Math.toRadians(stickAngleTotal)) * stickLength * scale);
         drawStickCartoon(canvas, stickStartX, stickStartY, stickEndX, stickEndY, scale);
         
-        // 绘制铲斗（IMU角度系统：0度=向上，负值=逆时针向左转，正值=顺时针向右转，±180度=向下）
-        // 铲斗需要额外顺时针转90度，所以直接使用bucketAngle（相当于bucketAngle - 90f + 90f）
-        float bucketAngleTotal = bucketAngle;
+        // 绘制铲斗（IMU角度系统：0度=水平向左，-90度=向上，90度=向下，±180度=向右）
+        // 角度映射：原来的-180度对应新的0度，原来的0度对应新的±180度（加180度）
+        // 旋转方向：0到180（正数）逆时针转，0到-180（负数）顺时针转（取反）
+        float bucketAngleTotal = -(bucketAngle + 180f);
         float bucketStartX = stickEndX;
         float bucketStartY = stickEndY;
         drawBucketCartoon(canvas, bucketStartX, bucketStartY, bucketAngleTotal, scale);
