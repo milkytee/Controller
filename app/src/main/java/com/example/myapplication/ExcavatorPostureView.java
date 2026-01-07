@@ -94,10 +94,9 @@ public class ExcavatorPostureView extends View {
         float stickEndY = stickStartY - (float) (Math.sin(Math.toRadians(stickAngleTotal)) * stickLength * scale);
         drawStickCartoon(canvas, stickStartX, stickStartY, stickEndX, stickEndY, scale);
         
-        // 绘制铲斗（IMU角度系统：0度=水平向左，-90度=向上，90度=向下，±180度=向右）
-        // 角度映射：原来的-180度对应新的0度，原来的0度对应新的±180度（加180度）
-        // 旋转方向：0到180（正数）逆时针转，0到-180（负数）顺时针转（取反）
-        float bucketAngleTotal = -(bucketAngle + 180f);
+        // 绘制铲斗（IMU角度系统：0度=向上，负值=逆时针向左转，正值=顺时针向右转，±180度=向下）
+        // 铲斗需要额外顺时针转90度，所以直接使用bucketAngle
+        float bucketAngleTotal = bucketAngle;
         float bucketStartX = stickEndX;
         float bucketStartY = stickEndY;
         drawBucketCartoon(canvas, bucketStartX, bucketStartY, bucketAngleTotal, scale);
@@ -374,7 +373,6 @@ public class ExcavatorPostureView extends View {
         // 移动到连接点并旋转
         canvas.translate(startX, startY);
         canvas.rotate(angle);
-        canvas.rotate(180f);  // 上下180度翻转
         
         // 在局部坐标系中绘制铲斗（连接点在右侧，前端在左侧）
         // 连接点位置（右侧，原点）
