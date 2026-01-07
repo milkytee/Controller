@@ -374,7 +374,6 @@ public class ExcavatorPostureView extends View {
         canvas.translate(startX, startY);
         canvas.rotate(angle);
         canvas.rotate(180f);  // 上下180度翻转
-        canvas.scale(-1f, 1f);  // 水平180度翻转
         
         // 在局部坐标系中绘制铲斗（连接点在右侧，前端在左侧）
         // 连接点位置（右侧，原点）
