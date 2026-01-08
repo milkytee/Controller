@@ -78,16 +78,16 @@ public class ExcavatorPostureView extends View {
         // 绘制驾驶室
         drawCabCartoon(canvas, centerX, centerY - scale * 0.05f, scale);
         
-        // 绘制大臂（绝对值系统：0度垂直向上，正值继续向上，负值向下）
+        // 绘制大臂（0度垂直向上，正值继续向上，负值向下）
         // 由于机械臂在车身左边，需要加90度偏移使0度时垂直向上
-        float boomAngleTotal = boomAngle + 180f;  // 0度时垂直向上
+        float boomAngleTotal = - boomAngle - 180f -25f;  // 0度时垂直向上
         float boomEndX = centerX + (float) (Math.cos(Math.toRadians(boomAngleTotal)) * boomLength * scale);
         float boomEndY = centerY - scale * 0.05f - (float) (Math.sin(Math.toRadians(boomAngleTotal)) * boomLength * scale);
         drawBoomCartoon(canvas, centerX, centerY - scale * 0.05f, boomEndX, boomEndY, scale);
         
-        // 绘制小臂（IMU角度系统：0度=向上，负值=逆时针向左转，正值=顺时针向右转，±180度=向下）
+        // 绘制小臂（0度=向上，负值=逆时针向左转，正值=顺时针向右转，±180度=向下）
         // 转换为Canvas坐标系：用户的0度（向上）对应Canvas的-90度
-        float stickAngleTotal = stickAngle - 90f;
+        float stickAngleTotal = stickAngle + 90f;
         float stickStartX = boomEndX;
         float stickStartY = boomEndY;
         float stickEndX = stickStartX + (float) (Math.cos(Math.toRadians(stickAngleTotal)) * stickLength * scale);
@@ -95,8 +95,8 @@ public class ExcavatorPostureView extends View {
         drawStickCartoon(canvas, stickStartX, stickStartY, stickEndX, stickEndY, scale);
         
         // 绘制铲斗（IMU角度系统：0度=向上，负值=逆时针向左转，正值=顺时针向右转，±180度=向下）
-        // 铲斗需要额外顺时针转90度，所以直接使用bucketAngle
-        float bucketAngleTotal = bucketAngle;
+        float offsetAngle = 90f;
+        float bucketAngleTotal = bucketAngle+offsetAngle;
         float bucketStartX = stickEndX;
         float bucketStartY = stickEndY;
         drawBucketCartoon(canvas, bucketStartX, bucketStartY, bucketAngleTotal, scale);
@@ -372,6 +372,7 @@ public class ExcavatorPostureView extends View {
         
         // 移动到连接点并旋转
         canvas.translate(startX, startY);
+        canvas.scale(-1f,1f);
         canvas.rotate(angle);
         
         // 在局部坐标系中绘制铲斗（连接点在右侧，前端在左侧）
@@ -379,35 +380,33 @@ public class ExcavatorPostureView extends View {
         float connectX = 0;
         float connectY = 0;
         
-        // 铲斗顶部宽度（连接板，整体收窄）
+        // 铲斗顶部宽度（连接板
         float topWidth = bucketHeight * 0.25f;  // 进一步收窄
         
-        // 铲斗前端（尖的，在左侧，稍微向上）
+        // 铲斗前端
         float frontX = -bucketLen * 1.1f;  // 更靠左（更靠前），让顶点向前移动
         float frontY = -bucketHeight * 0.2f;  // 前端更向上，增大凸起角度
         
-        // 铲斗顶部（从连接点向左，逐渐变窄）
+        // 铲斗顶部
         float topMidX = -bucketLen * 0.35f;
         float topMidY = -topWidth * 0.6f;  // 更向上，增大凸起角度
         
-        // 铲斗底部（向下弯曲，形成凹形）
+        // 铲斗底部
         float bottomMidX = -bucketLen * 0.55f;
         float bottomMidY = bucketHeight * 0.55f;  // 底部更深，形成更明显的凹形
         
         // 构建路径：从连接点开始，形成尖的铲斗形状
-        // 调整命名和坐标，让命名和实际显示位置一致（考虑180度翻转后的实际位置）
         Path bucketPath = new Path();
-        // 从连接点本身开始，一条完整的曲线到前端（不要竖线部分）
+        // 从连接点本身开始，一条完整的曲线到前端
         bucketPath.moveTo(connectX, 0);
         // 从连接点开始，一条完整的曲线到前端
-        float topCurveX = -bucketLen * 0.5f;  // 控制点往中间移，让顶点更靠近曲线中间
-        float topCurveY = topWidth * 1.8f;     // 再画高一点，让顶部曲线最高点更高
+        float topCurveX = -bucketLen * 0.5f;  // 让顶点更靠近曲线中间
+        float topCurveY = topWidth * 1.8f;     // 让顶部曲线最高点更高
         bucketPath.quadTo(
             topCurveX, topCurveY,
             frontX, frontY
         );
-        // 底部向右，向上弯曲回到连接点（凹进去，向上弯曲）
-        // 调整控制点让底部曲线更平
+        // 底部曲线
         float bottomCurveX = -bucketLen * 0.3f;  // 控制点位置
         float bottomCurveY = bucketHeight * 0.01f;  // 再平一点，减小弯曲程度
         bucketPath.quadTo(
